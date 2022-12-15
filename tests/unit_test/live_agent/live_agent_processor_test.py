@@ -574,3 +574,16 @@ class TestLiveAgentProcessor:
     def test_get_live_agent_exception(self):
         with pytest.raises(AppException, match="Live agent config not found!"):
             LiveAgent.from_bot("Chatbot")
+
+    def test_live_agent_validate(cls,monkeypatch):
+        def mock_validate_live_agent_config(*args, **kwargs):
+            return None
+        expected_config = {
+            "agent_type": "chatwoot", "config": {"inbox_identifier": ""},
+            "override_bot": False, "trigger_on_intents": ["greet", "enquiry"],
+            "trigger_on_actions": ["action_default_fallback", "action_enquiry"]
+        }
+        monkeypatch.setattr(Utility, "validate_live_agent_config", mock_validate_live_agent_config)
+        live_agent = LiveAgents(agent_type="chatwoot", config=expected_config)
+        with pytest.raises(ValueError, match="At least 1 intent or action is required to perform agent handoff"):
+            LiveAgents.validate(live_agent)
